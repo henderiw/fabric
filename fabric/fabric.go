@@ -90,6 +90,15 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 		}
 	}
 
+	// process borderleafs
+	if t.BorderLeaf != nil {
+		// process borderleafs nodes
+		if err := f.processTier("borderleaf", 1, t.BorderLeaf, true); err != nil {
+			return nil, err
+		}
+
+	}
+
 	// wire things
 
 	// process spine-leaf links
@@ -125,9 +134,9 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 					// otherwise there is a conflict and the algorithm behind will create
 					// overlapping indexes
 					uplinksPerNode := tier3Node.GetUplinkPerNode()
-					if uplinksPerNode > t.MaxUplinksTier3ToTier2 {
+					if uplinksPerNode > t.Settings.MaxUplinksTier3ToTier2 {
 						return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier3ToTier2 %d",
-							uplinksPerNode, t.MaxUplinksTier3ToTier2)
+							uplinksPerNode, t.Settings.MaxUplinksTier3ToTier2)
 					}
 
 					// the algorithm needs to avoid reindixing if changes happen -> introduced maxNumUplinks
@@ -153,8 +162,8 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 						}
 
 						label := map[string]string{
-							tier2Node.String(): tier2Node.GetInterfaceName(u + 1 + ((uint32(tier3NodeIndex) - 1) * t.MaxUplinksTier3ToTier2)),
-							tier3Node.String(): tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((uint32(tier2NodeIndex) - 1) * t.MaxUplinksTier3ToTier2)),
+							tier2Node.String(): tier2Node.GetInterfaceName(u + 1 + ((uint32(tier3NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
+							tier3Node.String(): tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
 						}
 						l.SetLabel(label)
 
@@ -183,8 +192,8 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 				// otherwise there is a conflict and the algorithm behind will create
 				// overlapping indexes
 				uplinksPerNode := tier2Node.GetUplinkPerNode()
-				if uplinksPerNode > t.MaxUplinksTier2ToTier1 {
-					return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier2ToTier1 %d", uplinksPerNode, t.MaxUplinksTier2ToTier1)
+				if uplinksPerNode > t.Settings.MaxUplinksTier2ToTier1 {
+					return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier2ToTier1 %d", uplinksPerNode, t.Settings.MaxUplinksTier2ToTier1)
 				}
 
 				// spine and superspine line up so we only create a link if there is a match
@@ -213,8 +222,8 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 						}
 
 						label := map[string]string{
-							tier1Node.String(): tier1Node.GetInterfaceName(u + 1 + (uint32(podIndex-1) * t.MaxUplinksTier2ToTier1)),
-							tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(relativeIndex-1) * t.MaxUplinksTier3ToTier2)),
+							tier1Node.String(): tier1Node.GetInterfaceName(u + 1 + (uint32(podIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+							tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(relativeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
 						}
 						l.SetLabel(label)
 
@@ -222,6 +231,55 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 
 						f.log.Debug("Adding link", "from:", tier1Node.String(), "itfce", label[tier1Node.String()], "to:", tier2Node.String(), "itfce", label[tier2Node.String()])
 					}
+				}
+			}
+		}
+
+		blSelector := labels.NewSelector()
+		blReq, _ := labels.NewRequirement(KeyPosition, selection.Equals, []string{string(topov1alpha1.PositionBorderLeaf)})
+		blSelector = blSelector.Add(*blReq)
+		blNodes := f.nodesByLabel(blSelector)
+
+		// process borderleaf-spine links
+		for _, blNode := range blNodes {
+			for _, tier2Node := range tier2Nodes {
+				// validate if the uplinks per node is not greater than max uplinks
+				// otherwise there is a conflict and the algorithm behind will create
+				// overlapping indexes
+				uplinksPerNode := tier2Node.GetUplinkPerNode()
+				if uplinksPerNode > t.Settings.MaxUplinksTier2ToTier1 {
+					return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier2ToTier1 %d", uplinksPerNode, t.Settings.MaxUplinksTier2ToTier1)
+				}
+
+				for u := uint32(0); u < uplinksPerNode; u++ {
+
+					l := f.addLink(blNode, tier2Node)
+
+					podIndex, err := strconv.Atoi(tier2Node.GetPodIndex())
+					if err != nil {
+						return nil, err
+					}
+					if uint32(podIndex) > t.Settings.MaxUplinksTier2ToTier1 {
+						return nil, fmt.Errorf("spines per pod cannot be bigger than maxSpinesPerPod")
+					}
+					tier2NodeIndex, err := strconv.Atoi(tier2Node.GetRelativeNodeIndex())
+					if err != nil {
+						return nil, err
+					}
+					blNodeIndex, err := strconv.Atoi(blNode.GetRelativeNodeIndex())
+					if err != nil {
+						return nil, err
+					}
+
+					label := map[string]string{
+						blNode.String():    blNode.GetInterfaceName(u + 1 + ((uint32(podIndex-1) + ((uint32(tier2NodeIndex)-1) *t.Settings.MaxSpinesPerPod)) * t.Settings.MaxUplinksTier2ToTier1)),
+						tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(blNodeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+					}
+					l.SetLabel(label)
+
+					f.graph.SetLine(l)
+
+					f.log.Debug("Adding link", "from:", blNode.String(), "itfce", label[blNode.String()], "to:", tier2Node.String(), "itfce", label[tier2Node.String()])
 				}
 			}
 		}
@@ -333,7 +391,7 @@ func (f *fabric) printLink(l Link) {
 
 }
 
-func (f *fabric) processTier(tier string, index uint32, tierTempl *topov1alpha1.TierTemplate, toBeDeployed bool) error {
+func (f *fabric) processTier(position topov1alpha1.Position, index uint32, tierTempl *topov1alpha1.TierTemplate, toBeDeployed bool) error {
 	vendorNum := len(tierTempl.VendorInfo)
 	for n := uint32(0); n < tierTempl.NodeNumber; n++ {
 		// venndor Index is used to map to the particular node based on modulo
@@ -343,7 +401,7 @@ func (f *fabric) processTier(tier string, index uint32, tierTempl *topov1alpha1.
 		vendorIdx := n % uint32(vendorNum)
 
 		ni := &nodeInfo{
-			tier:              tier,
+			position:          position,
 			graphIndex:        f.graph.NewNode().ID(),
 			relativeNodeIndex: n + 1,
 			uplinkPerNode:     tierTempl.UplinksPerNode,
@@ -351,13 +409,17 @@ func (f *fabric) processTier(tier string, index uint32, tierTempl *topov1alpha1.
 			toBeDeployed:      toBeDeployed,
 		}
 
-		if tier == "tier1" {
+		switch position {
+		case topov1alpha1.PositionSuperspine:
 			// relativeNodeIndexInPLane: m + 1 -> starts counting from 1, used when multiple nodes are used in the superspine plane
 			// PlaneIndex: n + 1 -> could also be called the Plane Index
 			ni.planeIndex = index
-		} else {
+		case topov1alpha1.PositionBorderLeaf:
+			// no plane or podIndex
+		default:
 			ni.podIndex = index
 		}
+
 		n, err := NewNode(ni)
 		if err != nil {
 			return err
@@ -411,8 +473,8 @@ func (f *fabric) parseTemplate(t *topov1alpha1.FabricTemplate) (*topov1alpha1.Fa
 		f.log.Debug("parseTemplate", "hasReference", true)
 		mt.BorderLeaf = t.BorderLeaf
 		mt.Tier1 = t.Tier1
-		mt.MaxUplinksTier2ToTier1 = t.MaxUplinksTier2ToTier1
-		mt.MaxUplinksTier3ToTier2 = t.MaxUplinksTier2ToTier1
+		mt.Settings.MaxUplinksTier2ToTier1 = t.Settings.MaxUplinksTier2ToTier1
+		mt.Settings.MaxUplinksTier3ToTier2 = t.Settings.MaxUplinksTier2ToTier1
 		mt.Pod = make([]*topov1alpha1.PodTemplate, 0)
 		for _, pod := range t.Pod {
 			if pod.TemplateReference != nil {

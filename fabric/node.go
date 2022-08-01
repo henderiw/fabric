@@ -42,27 +42,16 @@ type Node interface {
 
 type nodeInfo struct {
 	graphIndex        int64
-	tier              string // tier1, tier2, tier3
-	podIndex          uint32 // used for leaf and spines
-	planeIndex        uint32 // used for superspines
-	relativeNodeIndex uint32 // relative index for the position within the pod (leaf/spine) or plane (superspine)
+	position          topov1alpha1.Position // tier1, tier2, tier3
+	podIndex          uint32                // used for leaf and spines
+	planeIndex        uint32                // used for superspines
+	relativeNodeIndex uint32                // relative index for the position within the pod (leaf/spine) or plane (superspine)
 	uplinkPerNode     uint32
 	vendorInfo        *topov1alpha1.FabricTierVendorInfo
 	toBeDeployed      bool
 }
 
 func NewNode(nodeInfo *nodeInfo) (Node, error) {
-
-	var position topov1alpha1.Position
-	switch nodeInfo.tier {
-	case "tier1":
-		position = topov1alpha1.PositionSuperspine
-	case "tier2":
-		position = topov1alpha1.PositionSpine
-	case "tier3":
-		position = topov1alpha1.PositionLeaf
-	}
-
 	n := &node{
 		graphIndex: nodeInfo.graphIndex,
 		//relativeNodeIndex: nodeInfo.relativeNodeIndex,
@@ -71,11 +60,11 @@ func NewNode(nodeInfo *nodeInfo) (Node, error) {
 	}
 
 	labels := map[string]string{
-		KeyPosition:          string(position),
+		KeyPosition:          string(nodeInfo.position),
 		KeyRelativeNodeIndex: strconv.Itoa(int(nodeInfo.relativeNodeIndex)),
 	}
 
-	switch position {
+	switch nodeInfo.position {
 	case topov1alpha1.PositionLeaf, topov1alpha1.PositionSpine:
 		//n.podIndex = nodeInfo.podIndex
 		n.uplinkPerNode = nodeInfo.uplinkPerNode
