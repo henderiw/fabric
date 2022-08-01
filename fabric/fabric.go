@@ -1,14 +1,18 @@
 package fabric
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
+	"github.com/yndd/ndd-runtime/pkg/meta"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	"gonum.org/v1/gonum/graph/multi"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Option can be used to manipulate Fabric config.
@@ -21,11 +25,21 @@ func WithLogger(log logging.Logger) Option {
 	}
 }
 
+// WithClient specifies the fabric to use within the client.
+func WithClient(c client.Client) Option {
+	return func(f Fabric) {
+		f.SetClient(c)
+	}
+}
+
 type Fabric interface {
+	GetNodes() []Node
+	GetLinks() []Link
 	PrintNodes()
 	PrintLinks()
 
 	SetLogger(logger logging.Logger)
+	SetClient(c client.Client)
 }
 
 func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (Fabric, error) {
@@ -35,6 +49,13 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 
 	for _, opt := range opts {
 		opt(f)
+	}
+
+	// a template can have multiple template/definition references so we need to parse them
+	// to build one fabric topology
+	t, err := f.parseTemplate(t)
+	if err != nil {
+		return nil, err
 	}
 
 	// process leaf/spine nodes
@@ -201,20 +222,48 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 }
 
 type fabric struct {
-	log   logging.Logger
-	graph *multi.UndirectedGraph
+	log    logging.Logger
+	client client.Client
+	graph  *multi.UndirectedGraph
 }
 
 func (f *fabric) SetLogger(log logging.Logger) { f.log = log }
+func (f *fabric) SetClient(c client.Client)    { f.client = c }
 
-func (f *fabric) PrintNodes() {
+func (f *fabric) GetNodes() []Node {
+	nodes := make([]Node, 0)
 	it := f.graph.Nodes()
 	if it == nil {
-		return
+		return nodes
 	}
 
 	for it.Next() {
 		n := it.Node().(Node)
+		nodes = append(nodes, n)
+	}
+	return nodes
+}
+
+func (f *fabric) GetLinks() []Link {
+	links := make([]Link, 0)
+	it := f.graph.Edges()
+	if it == nil {
+		return links
+	}
+
+	for it.Next() {
+		edge := it.Edge().(multi.Edge)
+		for edge.Lines.Next() {
+			l := edge.Lines.Line().(Link)
+			links = append(links, l)
+		}
+	}
+	return links
+}
+
+func (f *fabric) PrintNodes() {
+	nodes := f.GetNodes()
+	for _, n := range nodes {
 		f.printNode(n)
 	}
 }
@@ -244,17 +293,8 @@ func (f *fabric) printNode(n Node) {
 }
 
 func (f *fabric) PrintLinks() {
-	it := f.graph.Edges()
-	if it == nil {
-		return
-	}
-
-	for it.Next() {
-		edge := it.Edge().(multi.Edge)
-		for edge.Lines.Next() {
-			l := edge.Lines.Line().(Link)
-			f.printLink(l)
-		}
+	for _, l := range f.GetLinks() {
+		f.printLink(l)
 	}
 }
 
@@ -349,4 +389,70 @@ func (f *fabric) nodesByLabel(selector labels.Selector) (nodes []Node) {
 func (f *fabric) addLink(from, to Node) Link {
 	l := f.graph.NewLine(from, to)
 	return NewLink(l)
+}
+
+func (f *fabric) parseTemplate(t *topov1alpha1.FabricTemplate) (*topov1alpha1.FabricTemplate, error) {
+	mt := &topov1alpha1.FabricTemplate{}
+
+	if err := t.CheckTemplate(true); err != nil {
+		return nil, err
+	}
+
+	if t.HasReference() {
+		f.log.Debug("parseTemplate", "hasReference", true)
+		mt.BorderLeaf = t.BorderLeaf
+		mt.Tier1 = t.Tier1
+		mt.MaxUplinksTier2ToTier1 = t.MaxUplinksTier2ToTier1
+		mt.MaxUplinksTier3ToTier2 = t.MaxUplinksTier2ToTier1
+		mt.Pod = make([]*topov1alpha1.PodTemplate, 0)
+		for _, pod := range t.Pod {
+			if pod.TemplateReference != nil {
+				pd, err := f.getPodDefintionFromTemplate(*pod.TemplateReference)
+				if err != nil {
+					return nil, err
+				}
+				pd.SetToBeDeployed(true)
+				mt.Pod = append(mt.Pod, pd)
+			}
+			if pod.DefinitionReference != nil {
+				name, namespace := meta.NamespacedName(*pod.DefinitionReference).GetNameAndNamespace()
+				t := &topov1alpha1.Definition{}
+				if err := f.client.Get(context.TODO(), types.NamespacedName{
+					Namespace: namespace,
+					Name:      name,
+				}, t); err != nil {
+					return nil, err
+				}
+				if len(t.Spec.Properties.Templates) != 1 {
+					return nil, fmt.Errorf("definition can only have 1 template")
+				}
+
+				pd, err := f.getPodDefintionFromTemplate(t.Spec.Properties.Templates[0].NamespacedName)
+				if err != nil {
+					return nil, err
+				}
+				pd.SetToBeDeployed(false)
+				mt.Pod = append(mt.Pod, pd)
+			}
+		}
+	} else {
+		mt = t
+	}
+
+	return mt, nil
+}
+
+func (f *fabric) getPodDefintionFromTemplate(name string) (*topov1alpha1.PodTemplate, error) {
+	name, namespace := meta.NamespacedName(name).GetNameAndNamespace()
+	t := &topov1alpha1.Template{}
+	if err := f.client.Get(context.TODO(), types.NamespacedName{
+		Namespace: namespace,
+		Name:      name,
+	}, t); err != nil {
+		return nil, err
+	}
+	if err := t.Spec.Properties.Fabric.CheckTemplate(false); err != nil {
+		return nil, err
+	}
+	return t.Spec.Properties.Fabric.Pod[0], nil
 }
