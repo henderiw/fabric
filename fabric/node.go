@@ -32,6 +32,7 @@ type Node interface {
 	GetUplinkPerNode() uint32
 	GetInterfaceName(idx uint32) string
 	GetInterfaceNameWithPlatfromOffset(idx uint32) string
+	IsToBeDeployed() bool
 
 	Attributes() []encoding.Attribute
 	SetLabel(label map[string]string) error
@@ -117,6 +118,7 @@ func (n *node) GetPodIndex() string                { return n.GetLabels()[KeyPod
 func (n *node) GetVendorType() targetv1.VendorType { return n.vendorInfo.VendorType }
 func (n *node) GetPlatform() string                { return n.vendorInfo.Platform }
 func (n *node) GetUplinkPerNode() uint32           { return n.uplinkPerNode }
+func (n *node) IsToBeDeployed() bool               { return n.toBeDeployed }
 
 func (n *node) GetInterfaceName(idx uint32) string {
 	return fmt.Sprintf("int-1/%d", idx)
