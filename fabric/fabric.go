@@ -69,11 +69,11 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 			//log.Debug("podIndex", "podIndex", podIndex)
 
 			// tier 2 -> spines in the pod
-			if err := f.processTier("tier2", podIndex, pod.Tier2, true); err != nil {
+			if err := f.processTier("tier2", podIndex, pod.Tier2, pod.IsToBeDeployed()); err != nil {
 				return nil, err
 			}
 			// tier 3 -> leafs in the pod
-			if err := f.processTier("tier3", podIndex, pod.Tier3, true); err != nil {
+			if err := f.processTier("tier3", podIndex, pod.Tier3, pod.IsToBeDeployed()); err != nil {
 				return nil, err
 			}
 		}
