@@ -16,6 +16,11 @@ type Link interface {
 	ID() int64
 	String() string
 
+	FromNodeName() string
+	ToNodeName() string
+	FromIfName() string
+	ToIfName() string
+
 	Attributes() []encoding.Attribute
 	SetLabel(label map[string]string) error
 	UpdateLabel(label map[string]string) error
@@ -47,6 +52,11 @@ func (l *link) String() string {
 	to := l.To().(Node)
 	return fmt.Sprintf("%s-%s-%s-%s", from.String(), l.GetLabels()[from.String()], to.String(), l.GetLabels()[to.String()])
 }
+
+func (l *link) FromNodeName() string { return l.From().(Node).String() }
+func (l *link) ToNodeName() string   { return l.To().(Node).String() }
+func (l *link) FromIfName() string {return l.GetLabels()[l.FromNodeName()]}
+func (l *link) ToIfName() string {return l.GetLabels()[l.FromNodeName()]}
 
 // Attributes implements the encoding.Attributer interface.
 func (l *link) Attributes() []encoding.Attribute {
