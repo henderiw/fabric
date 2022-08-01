@@ -117,10 +117,10 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 			tier2Nodes := f.nodesByLabel(tier2Selector)
 			tier3Nodes := f.nodesByLabel(tier3Selector)
 
-			for n, tier2Node := range tier2Nodes {
-				tier2NodeIndex := uint32(n) + 1
-				for m, tier3Node := range tier3Nodes {
-					tier3NodeIndex := uint32(m) + 1
+			for _, tier2Node := range tier2Nodes {
+				//tier2NodeIndex := uint32(n) + 1
+				for _, tier3Node := range tier3Nodes {
+					//tier3NodeIndex := uint32(m) + 1
 					// validate if the uplinks per node is not greater than max uplinks
 					// otherwise there is a conflict and the algorithm behind will create
 					// overlapping indexes
@@ -143,9 +143,18 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 
 						l := f.addLink(tier2Node, tier3Node)
 
+						tier3NodeIndex, err := strconv.Atoi(tier3Node.GetRelativeNodeIndex())
+						if err != nil {
+							return nil, err
+						}
+						tier2NodeIndex, err := strconv.Atoi(tier2Node.GetRelativeNodeIndex())
+						if err != nil {
+							return nil, err
+						}
+
 						label := map[string]string{
-							tier2Node.String(): tier2Node.GetInterfaceName(u + 1 + ((tier3NodeIndex - 1) * t.MaxUplinksTier3ToTier2)),
-							tier3Node.String(): tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((tier2NodeIndex - 1) * t.MaxUplinksTier3ToTier2)),
+							tier2Node.String(): tier2Node.GetInterfaceName(u + 1 + ((uint32(tier3NodeIndex) - 1) * t.MaxUplinksTier3ToTier2)),
+							tier3Node.String(): tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((uint32(tier2NodeIndex) - 1) * t.MaxUplinksTier3ToTier2)),
 						}
 						l.SetLabel(label)
 
