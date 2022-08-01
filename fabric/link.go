@@ -3,6 +3,7 @@ package fabric
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/encoding"
@@ -50,13 +51,14 @@ func (l *link) ID() int64                { return l.UID }
 func (l *link) String() string {
 	from := l.From().(Node)
 	to := l.To().(Node)
-	return fmt.Sprintf("%s-%s-%s-%s", from.String(), l.GetLabels()[from.String()], to.String(), l.GetLabels()[to.String()])
+	linkName := fmt.Sprintf("%s-%s-%s-%s", from.String(), l.GetLabels()[from.String()], to.String(), l.GetLabels()[to.String()])
+	return strings.ReplaceAll(linkName, "/", "-")
 }
 
 func (l *link) FromNodeName() string { return l.From().(Node).String() }
 func (l *link) ToNodeName() string   { return l.To().(Node).String() }
-func (l *link) FromIfName() string {return l.GetLabels()[l.FromNodeName()]}
-func (l *link) ToIfName() string {return l.GetLabels()[l.FromNodeName()]}
+func (l *link) FromIfName() string   { return l.GetLabels()[l.FromNodeName()] }
+func (l *link) ToIfName() string     { return l.GetLabels()[l.FromNodeName()] }
 
 // Attributes implements the encoding.Attributer interface.
 func (l *link) Attributes() []encoding.Attribute {
