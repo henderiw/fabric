@@ -272,7 +272,7 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 					}
 
 					label := map[string]string{
-						blNode.String():    blNode.GetInterfaceName(u + 1 + ((uint32(podIndex-1) + ((uint32(tier2NodeIndex)-1) *t.Settings.MaxSpinesPerPod)) * t.Settings.MaxUplinksTier2ToTier1)),
+						blNode.String():    blNode.GetInterfaceName(u + 1 + ((uint32(podIndex-1) + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxSpinesPerPod)) * t.Settings.MaxUplinksTier2ToTier1)),
 						tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(blNodeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
 					}
 					l.SetLabel(label)
@@ -473,8 +473,14 @@ func (f *fabric) parseTemplate(t *topov1alpha1.FabricTemplate) (*topov1alpha1.Fa
 		f.log.Debug("parseTemplate", "hasReference", true)
 		mt.BorderLeaf = t.BorderLeaf
 		mt.Tier1 = t.Tier1
-		mt.Settings.MaxUplinksTier2ToTier1 = t.Settings.MaxUplinksTier2ToTier1
-		mt.Settings.MaxUplinksTier3ToTier2 = t.Settings.MaxUplinksTier2ToTier1
+		if t.Settings != nil {
+			mt.Settings = &topov1alpha1.FabricTemplateSettings{
+				MaxUplinksTier2ToTier1: t.Settings.MaxUplinksTier2ToTier1,
+				MaxUplinksTier3ToTier2: t.Settings.MaxUplinksTier3ToTier2,
+				MaxSpinesPerPod:        t.Settings.MaxSpinesPerPod,
+			}
+		}
+
 		mt.Pod = make([]*topov1alpha1.PodTemplate, 0)
 		for _, pod := range t.Pod {
 			if pod.TemplateReference != nil {
