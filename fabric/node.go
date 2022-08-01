@@ -139,19 +139,26 @@ func (n *node) GetInterfaceNameWithPlatfromOffset(idx uint32) string {
 }
 
 func (n *node) getName() string {
-	if n.GetPosition() == string(topov1alpha1.PositionSuperspine) {
+	switch n.GetPosition() {
+	case string(topov1alpha1.PositionSuperspine):
 		return fmt.Sprintf("plane%s-%s%s",
 			n.GetLabels()[KeyPlaneIndex],
 			n.GetLabels()[KeyPosition],
 			n.GetLabels()[KeyRelativeNodeIndex],
 		)
-	} else {
+	case string(topov1alpha1.PositionBorderLeaf):
+		return fmt.Sprintf("%s%s",
+			n.GetLabels()[KeyPosition],
+			n.GetLabels()[KeyRelativeNodeIndex],
+		)
+	case string(topov1alpha1.PositionSpine), string(topov1alpha1.PositionLeaf):
 		return fmt.Sprintf("pod%s-%s%s",
 			n.GetLabels()[KeyPodIndex],
 			n.GetLabels()[KeyPosition],
 			n.GetLabels()[KeyRelativeNodeIndex],
 		)
 	}
+	return "dummy"
 }
 
 // Attributes implements the encoding.Attributer interface.
