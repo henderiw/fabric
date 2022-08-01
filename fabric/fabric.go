@@ -69,11 +69,11 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 			//log.Debug("podIndex", "podIndex", podIndex)
 
 			// tier 2 -> spines in the pod
-			if err := f.processTier("tier2", podIndex, pod.Tier2, pod.IsToBeDeployed()); err != nil {
+			if err := f.processTier(topov1alpha1.PositionSpine, podIndex, pod.Tier2, pod.IsToBeDeployed()); err != nil {
 				return nil, err
 			}
 			// tier 3 -> leafs in the pod
-			if err := f.processTier("tier3", podIndex, pod.Tier3, pod.IsToBeDeployed()); err != nil {
+			if err := f.processTier(topov1alpha1.PositionLeaf, podIndex, pod.Tier3, pod.IsToBeDeployed()); err != nil {
 				return nil, err
 			}
 		}
@@ -84,7 +84,7 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 	if t.Tier1 != nil {
 		// process superspine nodes
 		for n := uint32(0); n < t.GetSuperSpines(); n++ {
-			if err := f.processTier("tier1", n+1, t.Tier1, true); err != nil {
+			if err := f.processTier(topov1alpha1.PositionSuperspine, n+1, t.Tier1, true); err != nil {
 				return nil, err
 			}
 		}
@@ -93,7 +93,7 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 	// process borderleafs
 	if t.BorderLeaf != nil {
 		// process borderleafs nodes
-		if err := f.processTier("borderleaf", 1, t.BorderLeaf, true); err != nil {
+		if err := f.processTier(topov1alpha1.PositionBorderLeaf, 1, t.BorderLeaf, true); err != nil {
 			return nil, err
 		}
 
