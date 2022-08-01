@@ -58,7 +58,7 @@ func (l *link) String() string {
 func (l *link) FromNodeName() string { return l.From().(Node).String() }
 func (l *link) ToNodeName() string   { return l.To().(Node).String() }
 func (l *link) FromIfName() string   { return l.GetLabels()[l.FromNodeName()] }
-func (l *link) ToIfName() string     { return l.GetLabels()[l.FromNodeName()] }
+func (l *link) ToIfName() string     { return l.GetLabels()[l.ToNodeName()] }
 
 // Attributes implements the encoding.Attributer interface.
 func (l *link) Attributes() []encoding.Attribute {
