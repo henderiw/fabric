@@ -2,11 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/henderiw/fabric/fabric"
-	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	"github.com/yndd/ndd-runtime/pkg/logging"
+	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
@@ -33,4 +34,8 @@ func main() {
 	}
 	f.PrintNodes()
 	f.PrintLinks()
+
+	fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@")
+	fmt.Println()
+	f.PrintGraph()
 }

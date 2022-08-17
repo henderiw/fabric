@@ -8,6 +8,7 @@ import (
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	"github.com/yndd/ndd-runtime/pkg/meta"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	"gonum.org/v1/gonum/graph/encoding/dot"
 	"gonum.org/v1/gonum/graph/multi"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -37,6 +38,7 @@ type Fabric interface {
 	GetLinks() []Link
 	PrintNodes()
 	PrintLinks()
+	PrintGraph()
 
 	SetLogger(logger logging.Logger)
 	SetClient(c client.Client)
@@ -514,6 +516,9 @@ func (f *fabric) parseTemplate(t *topov1alpha1.FabricTemplate) (*topov1alpha1.Fa
 		}
 	} else {
 		mt = t
+		for _, pod := range t.Pod {
+			pod.SetToBeDeployed(true)
+		}
 	}
 
 	return mt, nil
@@ -532,4 +537,9 @@ func (f *fabric) getPodDefintionFromTemplate(name string) (*topov1alpha1.PodTemp
 		return nil, err
 	}
 	return t.Spec.Properties.Fabric.Pod[0], nil
+}
+
+func (f *fabric) PrintGraph() {
+	result, _ := dot.Marshal(f.graph, "", "", "  ")
+	fmt.Print(string(result))
 }

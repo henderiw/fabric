@@ -1,6 +1,8 @@
 {    
-    "maxUplinksTier2ToTier1": 2,
-    "maxUplinksTier3ToTier2": 2,
+    "settings" : {
+        "maxUplinksTier2ToTier1": 2,
+        "maxUplinksTier3ToTier2": 2
+    },
     "tier1": {
         "num": 2,
         "vendorInfo": [

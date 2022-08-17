@@ -1,0 +1,109 @@
+strict graph {
+  // Node definitions.
+  "pod1-spine1" [
+    podIndex=1
+    position=spine
+    relativeNodeIndex=1
+  ];
+  "pod1-spine2" [
+    podIndex=1
+    position=spine
+    relativeNodeIndex=2
+  ];
+  "pod1-leaf1" [
+    podIndex=1
+    position=leaf
+    relativeNodeIndex=1
+  ];
+  "pod1-leaf2" [
+    podIndex=1
+    position=leaf
+    relativeNodeIndex=2
+  ];
+  "pod1-leaf3" [
+    podIndex=1
+    position=leaf
+    relativeNodeIndex=3
+  ];
+  "pod1-leaf4" [
+    podIndex=1
+    position=leaf
+    relativeNodeIndex=4
+  ];
+  "pod2-spine1" [
+    podIndex=2
+    position=spine
+    relativeNodeIndex=1
+  ];
+  "pod2-spine2" [
+    podIndex=2
+    position=spine
+    relativeNodeIndex=2
+  ];
+  "pod2-leaf1" [
+    podIndex=2
+    position=leaf
+    relativeNodeIndex=1
+  ];
+  "pod2-leaf2" [
+    podIndex=2
+    position=leaf
+    relativeNodeIndex=2
+  ];
+  "pod2-leaf3" [
+    podIndex=2
+    position=leaf
+    relativeNodeIndex=3
+  ];
+  "pod2-leaf4" [
+    podIndex=2
+    position=leaf
+    relativeNodeIndex=4
+  ];
+  "plane1-superspine1" [
+    planeIndex=1
+    position=superspine
+    relativeNodeIndex=1
+  ];
+  "plane1-superspine2" [
+    planeIndex=1
+    position=superspine
+    relativeNodeIndex=2
+  ];
+  "plane2-superspine1" [
+    planeIndex=2
+    position=superspine
+    relativeNodeIndex=1
+  ];
+  "plane2-superspine2" [
+    planeIndex=2
+    position=superspine
+    relativeNodeIndex=2
+  ];
+
+  // Edge definitions.
+  "pod1-spine1" -- "pod1-leaf1";
+  "pod1-spine1" -- "pod1-leaf2";
+  "pod1-spine1" -- "pod1-leaf3";
+  "pod1-spine1" -- "pod1-leaf4";
+  "pod1-spine1" -- "plane1-superspine1";
+  "pod1-spine1" -- "plane1-superspine2";
+  "pod1-spine2" -- "pod1-leaf1";
+  "pod1-spine2" -- "pod1-leaf2";
+  "pod1-spine2" -- "pod1-leaf3";
+  "pod1-spine2" -- "pod1-leaf4";
+  "pod1-spine2" -- "plane2-superspine1";
+  "pod1-spine2" -- "plane2-superspine2";
+  "pod2-spine1" -- "pod2-leaf1";
+  "pod2-spine1" -- "pod2-leaf2";
+  "pod2-spine1" -- "pod2-leaf3";
+  "pod2-spine1" -- "pod2-leaf4";
+  "pod2-spine1" -- "plane1-superspine1";
+  "pod2-spine1" -- "plane1-superspine2";
+  "pod2-spine2" -- "pod2-leaf1";
+  "pod2-spine2" -- "pod2-leaf2";
+  "pod2-spine2" -- "pod2-leaf3";
+  "pod2-spine2" -- "pod2-leaf4";
+  "pod2-spine2" -- "plane2-superspine1";
+  "pod2-spine2" -- "plane2-superspine2";
+}
