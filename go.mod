@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/yndd/ndd-runtime v0.5.30
 	github.com/yndd/target v0.0.105
-	github.com/yndd/topology v0.0.16
+	github.com/yndd/topology v0.0.17
 	gonum.org/v1/gonum v0.11.0
 	k8s.io/apimachinery v0.24.1
 	sigs.k8s.io/controller-runtime v0.12.1

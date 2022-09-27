@@ -1636,8 +1636,8 @@ github.com/yndd/nddr-topo-registry v0.0.4/go.mod h1:f5/qMkWQa7namvEgYrNZisgvhcee
 github.com/yndd/registrator v0.0.19/go.mod h1:6y85l1HVkcwJNSknGFyx8jBmw4VDgRUaF0Spku6sHiw=
 github.com/yndd/target v0.0.105 h1:7CWltln3Bk7pXI+1k63wnOTOToRJdvGvE2typeFeDA8=
 github.com/yndd/target v0.0.105/go.mod h1:aIEUX0xpbuynwyjtAJJ2CufeEUHtrqbu/cUBSGXr4Zo=
-github.com/yndd/topology v0.0.16 h1:wwIoiJb/Z2Xo+/a6Kcm9/maAn8ee/NW0AL17qbgYkck=
-github.com/yndd/topology v0.0.16/go.mod h1:5CGfVjsA6XWfqmRfSjpM82VRLiPogou3CPGGv03wGU0=
+github.com/yndd/topology v0.0.17 h1:gyLVN/7jQt4kFi2AuO3ZvdUC0ByQ+e1ZJDfK5Rx11v8=
+github.com/yndd/topology v0.0.17/go.mod h1:tkS31Zm648SH43kZJ8oZbJX+LxKwy6yBE7qL1l2gcSw=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
