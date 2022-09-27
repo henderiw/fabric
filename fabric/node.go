@@ -33,6 +33,7 @@ type Node interface {
 	GetInterfaceName(idx uint32) string
 	GetInterfaceNameWithPlatfromOffset(idx uint32) string
 	IsToBeDeployed() bool
+	GetLocation() *topov1alpha1.Location
 
 	Attributes() []encoding.Attribute
 	SetLabel(label map[string]string) error
@@ -49,6 +50,7 @@ type nodeInfo struct {
 	uplinkPerNode     uint32
 	vendorInfo        *topov1alpha1.FabricTierVendorInfo
 	toBeDeployed      bool
+	location          *topov1alpha1.Location
 }
 
 func NewNode(nodeInfo *nodeInfo) (Node, error) {
@@ -57,6 +59,7 @@ func NewNode(nodeInfo *nodeInfo) (Node, error) {
 		//relativeNodeIndex: nodeInfo.relativeNodeIndex,
 		vendorInfo:   nodeInfo.vendorInfo,
 		toBeDeployed: nodeInfo.toBeDeployed,
+		location:     nodeInfo.location,
 	}
 
 	labels := map[string]string{
@@ -95,19 +98,21 @@ type node struct {
 	vendorInfo    *topov1alpha1.FabricTierVendorInfo
 	uplinkPerNode uint32
 	toBeDeployed  bool
+	location      *topov1alpha1.Location
 }
 
-func (n *node) ID() int64                          { return n.graphIndex }
-func (n *node) String() string                     { return n.getName() }
-func (n *node) DOTID() string                      { return n.getName() }
-func (n *node) GetPosition() string                { return n.GetLabels()[KeyPosition] }
-func (n *node) GetRelativeNodeIndex() string       { return n.GetLabels()[KeyRelativeNodeIndex] }
-func (n *node) GetPlaneIndex() string              { return n.GetLabels()[KeyPlaneIndex] }
-func (n *node) GetPodIndex() string                { return n.GetLabels()[KeyPodIndex] }
-func (n *node) GetVendorType() targetv1.VendorType { return n.vendorInfo.VendorType }
-func (n *node) GetPlatform() string                { return n.vendorInfo.Platform }
-func (n *node) GetUplinkPerNode() uint32           { return n.uplinkPerNode }
-func (n *node) IsToBeDeployed() bool               { return n.toBeDeployed }
+func (n *node) ID() int64                           { return n.graphIndex }
+func (n *node) String() string                      { return n.getName() }
+func (n *node) DOTID() string                       { return n.getName() }
+func (n *node) GetPosition() string                 { return n.GetLabels()[KeyPosition] }
+func (n *node) GetRelativeNodeIndex() string        { return n.GetLabels()[KeyRelativeNodeIndex] }
+func (n *node) GetPlaneIndex() string               { return n.GetLabels()[KeyPlaneIndex] }
+func (n *node) GetPodIndex() string                 { return n.GetLabels()[KeyPodIndex] }
+func (n *node) GetVendorType() targetv1.VendorType  { return n.vendorInfo.VendorType }
+func (n *node) GetPlatform() string                 { return n.vendorInfo.Platform }
+func (n *node) GetUplinkPerNode() uint32            { return n.uplinkPerNode }
+func (n *node) IsToBeDeployed() bool                { return n.toBeDeployed }
+func (n *node) GetLocation() *topov1alpha1.Location { return n.location }
 
 func (n *node) GetInterfaceName(idx uint32) string {
 	return fmt.Sprintf("int-1/%d", idx)

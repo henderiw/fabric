@@ -28,6 +28,10 @@ func main() {
 
 	f, err := fabric.New("nokia.region1.fabric1", &t,
 		fabric.WithLogger(logger),
+		fabric.WithLocation(&topov1alpha1.Location{
+			Latitude:  51.090875423265956,
+			Longitude: 4.87314214079595,
+		}),
 	)
 	if err != nil {
 		panic(err)
@@ -38,4 +42,8 @@ func main() {
 	fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@")
 	fmt.Println()
 	f.PrintGraph()
+
+	if err := f.GenerateJsonFile(); err != nil {
+		panic(err)
+	}
 }

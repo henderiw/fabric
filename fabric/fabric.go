@@ -2,11 +2,15 @@ package fabric
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
 	"github.com/yndd/ndd-runtime/pkg/meta"
+	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	"gonum.org/v1/gonum/graph/encoding/dot"
 	"gonum.org/v1/gonum/graph/multi"
@@ -33,15 +37,24 @@ func WithClient(c client.Client) Option {
 	}
 }
 
+// WithClient specifies the fabric to use within the client.
+func WithLocation(l *topov1alpha1.Location) Option {
+	return func(f Fabric) {
+		f.SetLocation(l)
+	}
+}
+
 type Fabric interface {
 	GetNodes() []Node
 	GetLinks() []Link
 	PrintNodes()
 	PrintLinks()
 	PrintGraph()
+	GenerateJsonFile() error
 
 	SetLogger(logger logging.Logger)
 	SetClient(c client.Client)
+	SetLocation(l *topov1alpha1.Location)
 }
 
 func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (Fabric, error) {
@@ -291,13 +304,15 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 }
 
 type fabric struct {
-	log    logging.Logger
-	client client.Client
-	graph  *multi.UndirectedGraph
+	log      logging.Logger
+	client   client.Client
+	graph    *multi.UndirectedGraph
+	location *topov1alpha1.Location
 }
 
-func (f *fabric) SetLogger(log logging.Logger) { f.log = log }
-func (f *fabric) SetClient(c client.Client)    { f.client = c }
+func (f *fabric) SetLogger(log logging.Logger)         { f.log = log }
+func (f *fabric) SetClient(c client.Client)            { f.client = c }
+func (f *fabric) SetLocation(l *topov1alpha1.Location) { f.location = l }
 
 func (f *fabric) GetNodes() []Node {
 	nodes := make([]Node, 0)
@@ -347,6 +362,7 @@ func (f *fabric) printNode(n Node) {
 			"relativeNodeIndex", n.GetRelativeNodeIndex(),
 			//"vendorType", n.GetVendorType(),
 			//"platform", n.GetPlatform(),
+			"location", n.GetLocation(),
 		)
 	} else {
 		f.log.Debug("node",
@@ -357,6 +373,7 @@ func (f *fabric) printNode(n Node) {
 			"relativeNodeIndex", n.GetRelativeNodeIndex(),
 			//"vendorType", n.GetVendorType(),
 			//"platform", n.GetPlatform(),
+			"location", n.GetLocation(),
 		)
 	}
 }
@@ -409,6 +426,7 @@ func (f *fabric) processTier(position topov1alpha1.Position, index uint32, tierT
 			uplinkPerNode:     tierTempl.UplinksPerNode,
 			vendorInfo:        tierTempl.VendorInfo[vendorIdx],
 			toBeDeployed:      toBeDeployed,
+			location:          f.location,
 		}
 
 		switch position {
@@ -542,4 +560,90 @@ func (f *fabric) getPodDefintionFromTemplate(name string) (*topov1alpha1.PodTemp
 func (f *fabric) PrintGraph() {
 	result, _ := dot.Marshal(f.graph, "", "", "  ")
 	fmt.Print(string(result))
+}
+
+type TopologyJsonNode struct {
+	ID    int                   `json:"id"`
+	Label string                `json:"label"`
+	Level int                   `json:"level"`
+	Nos   string                `json:"nos,omitempty"`
+	Cid   string                `json:"cid"`
+	Data  *TopologyJsonNodedata `json:"data,omitempty"`
+}
+
+type TopologyJsonNodedata struct {
+	ExpectedSWVersion string `json:"expectedSWVersion,omitempty"`
+	MgmtIP            string `json:"mgmtIp,omitempty"`
+	Model             string `json:"model,omitempty"`
+}
+
+type TopologyJsonLink struct {
+	From int `json:"from"`
+	To   int `json:"to"`
+}
+
+type TopologyJsonFile struct {
+	Nodes []*TopologyJsonNode `json:"nodes,omitempty"`
+	Edges []*TopologyJsonLink `json:"edges,omitempty"`
+}
+
+func (f *fabric) GenerateJsonFile() error {
+	t := &TopologyJsonFile{
+		Nodes: []*TopologyJsonNode{},
+		Edges: []*TopologyJsonLink{},
+	}
+
+	nodes := f.GetNodes()
+	for _, n := range nodes {
+
+		vendorType := ""
+		switch n.GetVendorType() {
+		case targetv1.VendorTypeNokiaSRL:
+			vendorType = "srlinux"
+		case targetv1.VendorTypeNokiaSROS:
+			vendorType = "sros"
+		default:
+			vendorType = string(n.GetVendorType())
+		}
+
+		t.Nodes = append(t.Nodes, &TopologyJsonNode{
+			ID:    int(n.ID()),
+			Level: topov1alpha1.GetLevel(topov1alpha1.Position(n.GetPosition())),
+			Label: n.String(),
+			Nos:   vendorType,
+			Cid:   n.GetPosition(),
+			Data: &TopologyJsonNodedata{
+				Model: n.GetPlatform(),
+			},
+		})
+	}
+
+	links := f.GetLinks()
+	for _, l := range links {
+		t.Edges = append(t.Edges, &TopologyJsonLink{
+			From: int(l.From().(Node).ID()),
+			To:   int(l.To().(Node).ID()),
+		})
+	}
+
+	j, err := json.MarshalIndent(t, "", "\t")
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("json output: \n%s\n", j)
+
+	filepath := filepath.Join("out", "fabric.json")
+
+	file, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(filepath, j, 0644); err != nil {
+		return err
+	}
+
+	defer file.Close()
+	return nil
 }
