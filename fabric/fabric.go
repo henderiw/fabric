@@ -98,7 +98,7 @@ func New(t *topov1alpha1.Template, opts ...Option) (Fabric, error) {
 	// the superspine is equal to the amount of spines per pod and multiplied with the number in the template
 	if newt.Tier1 != nil {
 		// process superspine nodes
-		for n := uint32(0); n < newt.Tier1.GetSuperSpines(); n++ {
+		for n := uint32(0); n < newt.GetSuperSpines(); n++ {
 			if err := f.processTier(topov1alpha1.PositionSuperspine, n+1, newt.Tier1, true); err != nil {
 				return nil, err
 			}
