@@ -309,7 +309,6 @@ type fabric struct {
 	graph     *multi.UndirectedGraph
 	location  *topov1alpha1.Location
 	namespace string
-	name      string
 }
 
 func (f *fabric) SetLogger(log logging.Logger)         { f.log = log }
