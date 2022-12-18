@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/yndd/ndd-runtime/pkg/logging"
-	"github.com/yndd/ndd-runtime/pkg/meta"
 	targetv1 "github.com/yndd/target/apis/target/v1"
 	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
 	"gonum.org/v1/gonum/graph/encoding/dot"
@@ -57,9 +56,10 @@ type Fabric interface {
 	SetLocation(l *topov1alpha1.Location)
 }
 
-func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (Fabric, error) {
+func New(t *topov1alpha1.Template, opts ...Option) (Fabric, error) {
 	f := &fabric{
-		graph: multi.NewUndirectedGraph(),
+		graph:     multi.NewUndirectedGraph(),
+		namespace: t.Namespace,
 	}
 
 	for _, opt := range opts {
@@ -68,14 +68,14 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 
 	// a template can have multiple template/definition references so we need to parse them
 	// to build one fabric topology
-	t, err := f.parseTemplate(t)
+	newt, err := f.parseTemplate(t.Spec.Properties.Fabric)
 	if err != nil {
 		return nil, err
 	}
 
 	// process leaf/spine nodes
 	// p is number of pod definitions
-	for p, pod := range t.Pod {
+	for p, pod := range newt.Pod {
 		// i is the number of pods in a definition
 		for i := uint32(0); i < pod.GetPodNumber(); i++ {
 			// podIndex is pod template index * pod index within the template
@@ -96,19 +96,19 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 
 	// proces superspines
 	// the superspine is equal to the amount of spines per pod and multiplied with the number in the template
-	if t.Tier1 != nil {
+	if newt.Tier1 != nil {
 		// process superspine nodes
-		for n := uint32(0); n < t.GetSuperSpines(); n++ {
-			if err := f.processTier(topov1alpha1.PositionSuperspine, n+1, t.Tier1, true); err != nil {
+		for n := uint32(0); n < newt.Tier1.GetSuperSpines(); n++ {
+			if err := f.processTier(topov1alpha1.PositionSuperspine, n+1, newt.Tier1, true); err != nil {
 				return nil, err
 			}
 		}
 	}
 
 	// process borderleafs
-	if t.BorderLeaf != nil {
+	if newt.BorderLeaf != nil {
 		// process borderleafs nodes
-		if err := f.processTier(topov1alpha1.PositionBorderLeaf, 1, t.BorderLeaf, true); err != nil {
+		if err := f.processTier(topov1alpha1.PositionBorderLeaf, 1, newt.BorderLeaf, true); err != nil {
 			return nil, err
 		}
 
@@ -117,7 +117,7 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 	// wire things
 
 	// process spine-leaf links
-	for p, pod := range t.Pod {
+	for p, pod := range newt.Pod {
 		// i is the number of pods in a definition
 		for i := 0; i < int(pod.GetPodNumber()); i++ {
 			// podIndex is pod template index * pod index within the template
@@ -149,9 +149,9 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 					// otherwise there is a conflict and the algorithm behind will create
 					// overlapping indexes
 					uplinksPerNode := tier3Node.GetUplinkPerNode()
-					if uplinksPerNode > t.Settings.MaxUplinksTier3ToTier2 {
+					if uplinksPerNode > newt.Settings.MaxUplinksTier3ToTier2 {
 						return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier3ToTier2 %d",
-							uplinksPerNode, t.Settings.MaxUplinksTier3ToTier2)
+							uplinksPerNode, newt.Settings.MaxUplinksTier3ToTier2)
 					}
 
 					// the algorithm needs to avoid reindixing if changes happen -> introduced maxNumUplinks
@@ -177,8 +177,8 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 						}
 
 						label := map[string]string{
-							tier2Node.String(): tier2Node.GetInterfaceName(u + 1 + ((uint32(tier3NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
-							tier3Node.String(): tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
+							tier2Node.String(): tier2Node.GetInterfaceName(u + 1 + ((uint32(tier3NodeIndex) - 1) * newt.Settings.MaxUplinksTier3ToTier2)),
+							tier3Node.String(): tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((uint32(tier2NodeIndex) - 1) * newt.Settings.MaxUplinksTier3ToTier2)),
 						}
 						l.SetLabel(label)
 
@@ -207,8 +207,8 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 				// otherwise there is a conflict and the algorithm behind will create
 				// overlapping indexes
 				uplinksPerNode := tier2Node.GetUplinkPerNode()
-				if uplinksPerNode > t.Settings.MaxUplinksTier2ToTier1 {
-					return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier2ToTier1 %d", uplinksPerNode, t.Settings.MaxUplinksTier2ToTier1)
+				if uplinksPerNode > newt.Settings.MaxUplinksTier2ToTier1 {
+					return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier2ToTier1 %d", uplinksPerNode, newt.Settings.MaxUplinksTier2ToTier1)
 				}
 
 				// spine and superspine line up so we only create a link if there is a match
@@ -237,8 +237,8 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 						}
 
 						label := map[string]string{
-							tier1Node.String(): tier1Node.GetInterfaceName(u + 1 + (uint32(podIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
-							tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(relativeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+							tier1Node.String(): tier1Node.GetInterfaceName(u + 1 + (uint32(podIndex-1) * newt.Settings.MaxUplinksTier2ToTier1)),
+							tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(relativeIndex-1) * newt.Settings.MaxUplinksTier2ToTier1)),
 						}
 						l.SetLabel(label)
 
@@ -262,8 +262,8 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 				// otherwise there is a conflict and the algorithm behind will create
 				// overlapping indexes
 				uplinksPerNode := tier2Node.GetUplinkPerNode()
-				if uplinksPerNode > t.Settings.MaxUplinksTier2ToTier1 {
-					return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier2ToTier1 %d", uplinksPerNode, t.Settings.MaxUplinksTier2ToTier1)
+				if uplinksPerNode > newt.Settings.MaxUplinksTier2ToTier1 {
+					return nil, fmt.Errorf("uplink per node %d can not be bigger than maxUplinksTier2ToTier1 %d", uplinksPerNode, newt.Settings.MaxUplinksTier2ToTier1)
 				}
 
 				for u := uint32(0); u < uplinksPerNode; u++ {
@@ -274,7 +274,7 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 					if err != nil {
 						return nil, err
 					}
-					if uint32(podIndex) > t.Settings.MaxUplinksTier2ToTier1 {
+					if uint32(podIndex) > newt.Settings.MaxUplinksTier2ToTier1 {
 						return nil, fmt.Errorf("spines per pod cannot be bigger than maxSpinesPerPod")
 					}
 					tier2NodeIndex, err := strconv.Atoi(tier2Node.GetRelativeNodeIndex())
@@ -287,8 +287,8 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 					}
 
 					label := map[string]string{
-						blNode.String():    blNode.GetInterfaceName(u + 1 + ((uint32(podIndex-1) + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxSpinesPerPod)) * t.Settings.MaxUplinksTier2ToTier1)),
-						tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(blNodeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+						blNode.String():    blNode.GetInterfaceName(u + 1 + ((uint32(podIndex-1) + ((uint32(tier2NodeIndex) - 1) * newt.Settings.MaxSpinesPerPod)) * newt.Settings.MaxUplinksTier2ToTier1)),
+						tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(blNodeIndex-1) * newt.Settings.MaxUplinksTier2ToTier1)),
 					}
 					l.SetLabel(label)
 
@@ -304,10 +304,12 @@ func New(namespaceName string, t *topov1alpha1.FabricTemplate, opts ...Option) (
 }
 
 type fabric struct {
-	log      logging.Logger
-	client   client.Client
-	graph    *multi.UndirectedGraph
-	location *topov1alpha1.Location
+	log       logging.Logger
+	client    client.Client
+	graph     *multi.UndirectedGraph
+	location  *topov1alpha1.Location
+	namespace string
+	name      string
 }
 
 func (f *fabric) SetLogger(log logging.Logger)         { f.log = log }
@@ -503,34 +505,36 @@ func (f *fabric) parseTemplate(t *topov1alpha1.FabricTemplate) (*topov1alpha1.Fa
 
 		mt.Pod = make([]*topov1alpha1.PodTemplate, 0)
 		for _, pod := range t.Pod {
-			if pod.TemplateReference != nil {
-				pd, err := f.getPodDefintionFromTemplate(*pod.TemplateReference)
+			if pod.TemplateRef != nil {
+				pd, err := f.getPodDefintionFromTemplate(pod.TemplateRef.Name)
 				if err != nil {
 					return nil, err
 				}
 				pd.SetToBeDeployed(true)
 				mt.Pod = append(mt.Pod, pd)
 			}
-			if pod.DefinitionReference != nil {
-				name, namespace := meta.NamespacedName(*pod.DefinitionReference).GetNameAndNamespace()
-				t := &topov1alpha1.Definition{}
-				if err := f.client.Get(context.TODO(), types.NamespacedName{
-					Namespace: namespace,
-					Name:      name,
-				}, t); err != nil {
-					return nil, err
-				}
-				if len(t.Spec.Properties.Templates) != 1 {
-					return nil, fmt.Errorf("definition can only have 1 template")
-				}
+			/*
+				if pod.DefinitionReference != nil {
+					name, namespace := meta.NamespacedName(*pod.DefinitionReference).GetNameAndNamespace()
+					t := &topov1alpha1.Definition{}
+					if err := f.client.Get(context.TODO(), types.NamespacedName{
+						Namespace: namespace,
+						Name:      name,
+					}, t); err != nil {
+						return nil, err
+					}
+					if len(t.Spec.Properties.Templates) != 1 {
+						return nil, fmt.Errorf("definition can only have 1 template")
+					}
 
-				pd, err := f.getPodDefintionFromTemplate(t.Spec.Properties.Templates[0].NamespacedName)
-				if err != nil {
-					return nil, err
+					pd, err := f.getPodDefintionFromTemplate(t.Spec.Properties.Templates[0].NamespacedName)
+					if err != nil {
+						return nil, err
+					}
+					pd.SetToBeDeployed(false)
+					mt.Pod = append(mt.Pod, pd)
 				}
-				pd.SetToBeDeployed(false)
-				mt.Pod = append(mt.Pod, pd)
-			}
+			*/
 		}
 	} else {
 		mt = t
@@ -543,10 +547,9 @@ func (f *fabric) parseTemplate(t *topov1alpha1.FabricTemplate) (*topov1alpha1.Fa
 }
 
 func (f *fabric) getPodDefintionFromTemplate(name string) (*topov1alpha1.PodTemplate, error) {
-	name, namespace := meta.NamespacedName(name).GetNameAndNamespace()
 	t := &topov1alpha1.Template{}
 	if err := f.client.Get(context.TODO(), types.NamespacedName{
-		Namespace: namespace,
+		Namespace: f.namespace,
 		Name:      name,
 	}, t); err != nil {
 		return nil, err

@@ -21,12 +21,12 @@ func main() {
 	}
 	//fmt.Printf("raw ytes: \n%s\n", string(d))
 
-	t := topov1alpha1.FabricTemplate{}
+	t := topov1alpha1.Template{}
 	if err := json.Unmarshal(d, &t); err != nil {
 		panic(err)
 	}
 
-	f, err := fabric.New("nokia.region1.fabric1", &t,
+	f, err := fabric.New(&t,
 		fabric.WithLogger(logger),
 		fabric.WithLocation(&topov1alpha1.Location{
 			Latitude:  "51.090875423265956",
