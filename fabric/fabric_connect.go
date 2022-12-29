@@ -76,11 +76,11 @@ func (r *fabric) connectSpine2Leaf(t *topov1alpha1.FabricTemplate) error {
 					// max uplinks    = mergedTemplate.MaxUplinksTier3ToTier2
 					for u := uint32(0); u < uplinksPerNode; u++ {
 
-						tier2NodeIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
+						tier2NodeIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetRelativeNodeIndex())
 						if err != nil {
 							return err
 						}
-						tier3NodeIndex, err := strconv.Atoi(tier3Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
+						tier3NodeIndex, err := strconv.Atoi(tier3Node.GetKRMNode().GetRelativeNodeIndex())
 						if err != nil {
 							return err
 						}
@@ -129,7 +129,7 @@ func (r *fabric) connectSpine2SuperSpine(t *topov1alpha1.FabricTemplate) error {
 
 			// spine and superspine line up so we only create a link if there is a match
 			// on the indexes
-			if tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex] == tier1Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyPlaneIndex] {
+			if tier2Node.GetKRMNode().GetRelativeNodeIndex() == tier1Node.GetKRMNode().GetPlaneIndex() {
 				// the algorithm needs to avoid reindixing if changes happen -> introduced maxNumUplinks
 				// the allocation is first allocating the uplink Index
 				// u represnts the actual uplink index
@@ -141,11 +141,11 @@ func (r *fabric) connectSpine2SuperSpine(t *topov1alpha1.FabricTemplate) error {
 				// max uplinks             = mergedTemplate.MaxUplinksTier2ToTier1
 				for u := uint32(0); u < uplinksPerNode; u++ {
 
-					podIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyPodIndex])
+					podIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetPodIndex())
 					if err != nil {
 						return err
 					}
-					relativeIndex, err := strconv.Atoi(tier1Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
+					relativeIndex, err := strconv.Atoi(tier1Node.GetKRMNode().GetRelativeNodeIndex())
 					if err != nil {
 						return err
 					}
@@ -200,11 +200,11 @@ func (r *fabric) connectSpine2borderLeaf(t *topov1alpha1.FabricTemplate) error {
 				if uint32(podIndex) > t.Settings.MaxUplinksTier2ToTier1 {
 					return fmt.Errorf("spines per pod cannot be bigger than maxSpinesPerPod")
 				}
-				tier2NodeIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
+				tier2NodeIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetRelativeNodeIndex())
 				if err != nil {
 					return err
 				}
-				blNodeIndex, err := strconv.Atoi(blNode.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
+				blNodeIndex, err := strconv.Atoi(blNode.GetKRMNode().GetRelativeNodeIndex())
 				if err != nil {
 					return err
 				}

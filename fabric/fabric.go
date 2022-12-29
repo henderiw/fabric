@@ -218,7 +218,7 @@ func (f *fabric) GenerateJsonFile() error {
 		t.Nodes = append(t.Nodes, &TopologyJsonNode{
 			ID:    int(n.ID()),
 			Level: topov1alpha1.GetLevel(topov1alpha1.Position(n.GetKRMNode().Spec.Properties.Position)),
-			Label: n.String(),
+			Label: n.GetKRMNode().GetName(),
 			Nos:   vendorType,
 			Cid:   string(n.GetKRMNode().Spec.Properties.Position),
 			Data: &TopologyJsonNodedata{

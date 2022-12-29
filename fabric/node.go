@@ -56,16 +56,35 @@ func NewNode(oi *originInfo, ni *nodeInfo) Node {
 }
 
 type node struct {
-	graphIndex int64
+	graphIndex    int64
 	uplinkPerNode uint32
-	nodeKRM *topov1alpha1.Node
+	nodeKRM       *topov1alpha1.Node
 }
 
-func (n *node) ID() int64                      { return n.graphIndex }
-func (n *node) String() string                 { return n.GetKRMNode().GetName() }
+func (n *node) ID() int64 { return n.graphIndex }
+func (n *node) String() string {
+	switch n.GetKRMNode().GetPosition() {
+	case topov1alpha1.PositionSuperspine:
+		return fmt.Sprintf("plane%s-%s%s",
+			n.GetKRMNode().GetPlaneIndex(),
+			n.GetKRMNode().GetPosition(),
+			n.GetKRMNode().GetRelativeNodeIndex())
+	case topov1alpha1.PositionBorderLeaf:
+		return fmt.Sprintf("%s%s",
+			n.GetKRMNode().GetPosition(),
+			n.GetKRMNode().GetRelativeNodeIndex())
+	case topov1alpha1.PositionSpine, topov1alpha1.PositionLeaf:
+		return fmt.Sprintf("pod%s-%s%s",
+			n.GetKRMNode().GetPodIndex(),
+			n.GetKRMNode().GetPosition(),
+			n.GetKRMNode().GetRelativeNodeIndex())
+	}
+	return "dummy"
+
+}
 func (n *node) DOTID() string                  { return n.GetKRMNode().GetName() }
 func (n *node) GetKRMNode() *topov1alpha1.Node { return n.nodeKRM }
-func (n *node) GetLabels() labels.Set { return n.GetKRMNode().GetLabels() }
+func (n *node) GetLabels() labels.Set          { return n.GetKRMNode().GetLabels() }
 
 func (n *node) GetUplinkPerNode() uint32 { return n.uplinkPerNode }
 func (n *node) GetInterfaceName(idx uint32) string {
@@ -94,8 +113,6 @@ func (n *node) GetInterfaceNameWithPlatfromOffset(idx uint32) string {
 
 	return fmt.Sprintf("int-1/%d", actualIndex)
 }
-
-
 
 func (ni *nodeInfo) buildNode(oi *originInfo) *topov1alpha1.Node {
 	labels := map[string]string{

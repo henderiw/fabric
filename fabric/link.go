@@ -72,12 +72,12 @@ func (l *linkInfo) buildLink(oi *originInfo) *topov1alpha1.Link {
 				Endpoints: []*topov1alpha1.Endpoints{
 					{
 						InterfaceName: l.fromItfce,
-						NodeName:      l.from.String(),
+						NodeName:      l.from.GetKRMNode().GetName(),
 						Kind:          topov1alpha1.EndpointKindInfra,
 					},
 					{
 						InterfaceName: l.toItfce,
-						NodeName:      l.to.String(),
+						NodeName:      l.to.GetKRMNode().GetName(),
 						Kind:          topov1alpha1.EndpointKindInfra,
 					},
 				},

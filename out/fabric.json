@@ -1,48 +1,8 @@
 {
 	"nodes": [
 		{
-			"id": 4,
-			"label": "fabric1.pod1-leaf3",
-			"level": 2,
-			"nos": "srlinux",
-			"cid": "leaf",
-			"data": {
-				"model": "IXR-D3"
-			}
-		},
-		{
-			"id": 5,
-			"label": "fabric1.pod1-leaf4",
-			"level": 2,
-			"nos": "srlinux",
-			"cid": "leaf",
-			"data": {
-				"model": "IXR-D3"
-			}
-		},
-		{
-			"id": 7,
-			"label": "fabric1.plane1-superspine2",
-			"level": 0,
-			"nos": "srlinux",
-			"cid": "superspine",
-			"data": {
-				"model": "IXR-D3"
-			}
-		},
-		{
-			"id": 8,
-			"label": "fabric1.plane2-superspine1",
-			"level": 0,
-			"nos": "srlinux",
-			"cid": "superspine",
-			"data": {
-				"model": "IXR-D3"
-			}
-		},
-		{
-			"id": 1,
-			"label": "fabric1.pod1-spine2",
+			"id": 0,
+			"label": "fabric1.pod1-spine1",
 			"level": 1,
 			"nos": "srlinux",
 			"cid": "spine",
@@ -71,18 +31,28 @@
 			}
 		},
 		{
-			"id": 0,
-			"label": "fabric1.pod1-spine1",
-			"level": 1,
+			"id": 4,
+			"label": "fabric1.pod1-leaf3",
+			"level": 2,
 			"nos": "srlinux",
-			"cid": "spine",
+			"cid": "leaf",
 			"data": {
 				"model": "IXR-D3"
 			}
 		},
 		{
-			"id": 6,
-			"label": "fabric1.plane1-superspine1",
+			"id": 7,
+			"label": "fabric1.plane1-superspine2",
+			"level": 0,
+			"nos": "srlinux",
+			"cid": "superspine",
+			"data": {
+				"model": "IXR-D3"
+			}
+		},
+		{
+			"id": 8,
+			"label": "fabric1.plane2-superspine1",
 			"level": 0,
 			"nos": "srlinux",
 			"cid": "superspine",
@@ -99,16 +69,70 @@
 			"data": {
 				"model": "IXR-D3"
 			}
+		},
+		{
+			"id": 1,
+			"label": "fabric1.pod1-spine2",
+			"level": 1,
+			"nos": "srlinux",
+			"cid": "spine",
+			"data": {
+				"model": "IXR-D3"
+			}
+		},
+		{
+			"id": 5,
+			"label": "fabric1.pod1-leaf4",
+			"level": 2,
+			"nos": "srlinux",
+			"cid": "leaf",
+			"data": {
+				"model": "IXR-D3"
+			}
+		},
+		{
+			"id": 6,
+			"label": "fabric1.plane1-superspine1",
+			"level": 0,
+			"nos": "srlinux",
+			"cid": "superspine",
+			"data": {
+				"model": "IXR-D3"
+			}
 		}
 	],
 	"edges": [
 		{
 			"from": 1,
+			"to": 2
+		},
+		{
+			"from": 1,
+			"to": 2
+		},
+		{
+			"from": 1,
+			"to": 3
+		},
+		{
+			"from": 1,
+			"to": 3
+		},
+		{
+			"from": 1,
 			"to": 4
 		},
 		{
 			"from": 1,
 			"to": 4
+		},
+		{
+			"from": 1,
+			"to": 5
+		},
+		{
+			"from": 1,
+			"to": 5
 		},
 		{
 			"from": 1,
@@ -143,28 +167,12 @@
 			"to": 9
 		},
 		{
-			"from": 1,
+			"from": 0,
 			"to": 5
 		},
 		{
-			"from": 1,
+			"from": 0,
 			"to": 5
-		},
-		{
-			"from": 1,
-			"to": 2
-		},
-		{
-			"from": 1,
-			"to": 2
-		},
-		{
-			"from": 1,
-			"to": 3
-		},
-		{
-			"from": 1,
-			"to": 3
 		},
 		{
 			"from": 0,
@@ -184,11 +192,19 @@
 		},
 		{
 			"from": 0,
-			"to": 5
+			"to": 7
 		},
 		{
 			"from": 0,
-			"to": 5
+			"to": 7
+		},
+		{
+			"from": 0,
+			"to": 7
+		},
+		{
+			"from": 0,
+			"to": 7
 		},
 		{
 			"from": 0,
@@ -213,22 +229,6 @@
 		{
 			"from": 0,
 			"to": 4
-		},
-		{
-			"from": 0,
-			"to": 7
-		},
-		{
-			"from": 0,
-			"to": 7
-		},
-		{
-			"from": 0,
-			"to": 7
-		},
-		{
-			"from": 0,
-			"to": 7
 		}
 	]
 }
