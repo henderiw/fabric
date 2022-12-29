@@ -22,11 +22,14 @@ type Fabric interface {
 }
 
 type Config struct {
-	Name            string
-	Namespace       string
-	Location        *topov1alpha1.Location
-	MasterTemplates []*topov1alpha1.Template
-	ChildTemplates  []*topov1alpha1.Template
+	Name             string
+	Namespace        string
+	Location         *topov1alpha1.Location
+	Organization     string
+	Deployment       string
+	AvailabilityZone string
+	MasterTemplates  []*topov1alpha1.Template
+	ChildTemplates   []*topov1alpha1.Template
 }
 
 type fabric struct {

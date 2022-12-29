@@ -85,14 +85,6 @@ func (r *fabric) connectSpine2Leaf(t *topov1alpha1.FabricTemplate) error {
 							return err
 						}
 
-						/*
-							label := map[string]string{
-								tier2Node.String(): tier2Node.GetInterfaceName(u + 1 + ((uint32(tier3NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
-								tier3Node.String(): tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
-							}
-							l.SetLabel(label)
-						*/
-
 						l := r.addLink(&originInfo{
 							name:      r.cfg.Name,
 							namespace: r.cfg.Namespace,
@@ -105,8 +97,6 @@ func (r *fabric) connectSpine2Leaf(t *topov1alpha1.FabricTemplate) error {
 						})
 
 						r.graph.SetLine(l)
-
-						//f.log.Debug("Adding link", "from:", tier2Node.String(), "itfce", label[tier2Node.String()], "to:", tier3Node.String(), "itfce", label[tier3Node.String()])
 					}
 				}
 			}
@@ -151,14 +141,6 @@ func (r *fabric) connectSpine2SuperSpine(t *topov1alpha1.FabricTemplate) error {
 				// max uplinks             = mergedTemplate.MaxUplinksTier2ToTier1
 				for u := uint32(0); u < uplinksPerNode; u++ {
 
-					/*
-						l := r.addLink(&originInfo{
-							name:      r.cfg.Name,
-							namespace: r.cfg.Namespace,
-							location:  r.cfg.Location,
-						}, tier1Node, tier2Node)
-					*/
-
 					podIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyPodIndex])
 					if err != nil {
 						return err
@@ -167,14 +149,6 @@ func (r *fabric) connectSpine2SuperSpine(t *topov1alpha1.FabricTemplate) error {
 					if err != nil {
 						return err
 					}
-
-					/*
-						label := map[string]string{
-							tier1Node.String(): tier1Node.GetInterfaceName(u + 1 + (uint32(podIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
-							tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(relativeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
-						}
-						l.SetLabel(label)
-					*/
 
 					l := r.addLink(&originInfo{
 						name:      r.cfg.Name,
@@ -188,8 +162,6 @@ func (r *fabric) connectSpine2SuperSpine(t *topov1alpha1.FabricTemplate) error {
 					})
 
 					r.graph.SetLine(l)
-
-					//f.log.Debug("Adding link", "from:", tier1Node.String(), "itfce", label[tier1Node.String()], "to:", tier2Node.String(), "itfce", label[tier2Node.String()])
 				}
 			}
 		}
@@ -221,14 +193,6 @@ func (r *fabric) connectSpine2borderLeaf(t *topov1alpha1.FabricTemplate) error {
 
 			for u := uint32(0); u < uplinksPerNode; u++ {
 
-				/*
-					l := r.addLink(&originInfo{
-						name:      r.cfg.Name,
-						namespace: r.cfg.Namespace,
-						location:  r.cfg.Location,
-					}, blNode, tier2Node)
-				*/
-
 				podIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyPodIndex])
 				if err != nil {
 					return err
@@ -245,14 +209,6 @@ func (r *fabric) connectSpine2borderLeaf(t *topov1alpha1.FabricTemplate) error {
 					return err
 				}
 
-				/*
-					label := map[string]string{
-						blNode.String():    blNode.GetInterfaceName(u + 1 + ((uint32(podIndex-1) + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxSpinesPerPod)) * t.Settings.MaxUplinksTier2ToTier1)),
-						tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(blNodeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
-					}
-					l.SetLabel(label)
-				*/
-
 				l := r.addLink(&originInfo{
 					name:      r.cfg.Name,
 					namespace: r.cfg.Namespace,
@@ -265,8 +221,6 @@ func (r *fabric) connectSpine2borderLeaf(t *topov1alpha1.FabricTemplate) error {
 				})
 
 				r.graph.SetLine(l)
-
-				//f.log.Debug("Adding link", "from:", blNode.String(), "itfce", label[blNode.String()], "to:", tier2Node.String(), "itfce", label[tier2Node.String()])
 			}
 		}
 	}
