@@ -1,43 +1,33 @@
 {
 	"nodes": [
 		{
-			"id": 2,
-			"label": "pod1-leaf1",
+			"id": 5,
+			"label": "pod1-leaf4",
 			"level": 2,
 			"nos": "srlinux",
 			"cid": "leaf",
 			"data": {
-				"model": "IXR-D3L"
+				"model": "IXR-D3"
 			}
 		},
 		{
-			"id": 6,
-			"label": "pod2-spine1",
-			"level": 1,
-			"nos": "srlinux",
-			"cid": "spine",
-			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 13,
+			"id": 7,
 			"label": "plane1-superspine2",
 			"level": 0,
 			"nos": "srlinux",
 			"cid": "superspine",
 			"data": {
-				"model": "IXR-D3L"
+				"model": "IXR-D3"
 			}
 		},
 		{
-			"id": 14,
+			"id": 8,
 			"label": "plane2-superspine1",
 			"level": 0,
 			"nos": "srlinux",
 			"cid": "superspine",
 			"data": {
-				"model": "IXR-D3L"
+				"model": "IXR-D3"
 			}
 		},
 		{
@@ -47,107 +37,17 @@
 			"nos": "srlinux",
 			"cid": "spine",
 			"data": {
-				"model": "IXR-D3L"
+				"model": "IXR-D3"
 			}
 		},
 		{
-			"id": 5,
-			"label": "pod1-leaf4",
+			"id": 2,
+			"label": "pod1-leaf1",
 			"level": 2,
 			"nos": "srlinux",
 			"cid": "leaf",
 			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 9,
-			"label": "pod2-leaf2",
-			"level": 2,
-			"nos": "srlinux",
-			"cid": "leaf",
-			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 10,
-			"label": "pod2-leaf3",
-			"level": 2,
-			"nos": "srlinux",
-			"cid": "leaf",
-			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 12,
-			"label": "plane1-superspine1",
-			"level": 0,
-			"nos": "srlinux",
-			"cid": "superspine",
-			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 0,
-			"label": "pod1-spine1",
-			"level": 1,
-			"nos": "srlinux",
-			"cid": "spine",
-			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 8,
-			"label": "pod2-leaf1",
-			"level": 2,
-			"nos": "srlinux",
-			"cid": "leaf",
-			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 7,
-			"label": "pod2-spine2",
-			"level": 1,
-			"nos": "srlinux",
-			"cid": "spine",
-			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 4,
-			"label": "pod1-leaf3",
-			"level": 2,
-			"nos": "srlinux",
-			"cid": "leaf",
-			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 11,
-			"label": "pod2-leaf4",
-			"level": 2,
-			"nos": "srlinux",
-			"cid": "leaf",
-			"data": {
-				"model": "IXR-D3L"
-			}
-		},
-		{
-			"id": 15,
-			"label": "plane2-superspine2",
-			"level": 0,
-			"nos": "srlinux",
-			"cid": "superspine",
-			"data": {
-				"model": "IXR-D3L"
+				"model": "IXR-D3"
 			}
 		},
 		{
@@ -157,66 +57,122 @@
 			"nos": "srlinux",
 			"cid": "leaf",
 			"data": {
-				"model": "IXR-D3L"
+				"model": "IXR-D3"
+			}
+		},
+		{
+			"id": 4,
+			"label": "pod1-leaf3",
+			"level": 2,
+			"nos": "srlinux",
+			"cid": "leaf",
+			"data": {
+				"model": "IXR-D3"
+			}
+		},
+		{
+			"id": 6,
+			"label": "plane1-superspine1",
+			"level": 0,
+			"nos": "srlinux",
+			"cid": "superspine",
+			"data": {
+				"model": "IXR-D3"
+			}
+		},
+		{
+			"id": 9,
+			"label": "plane2-superspine2",
+			"level": 0,
+			"nos": "srlinux",
+			"cid": "superspine",
+			"data": {
+				"model": "IXR-D3"
+			}
+		},
+		{
+			"id": 0,
+			"label": "pod1-spine1",
+			"level": 1,
+			"nos": "srlinux",
+			"cid": "spine",
+			"data": {
+				"model": "IXR-D3"
 			}
 		}
 	],
 	"edges": [
 		{
-			"from": 7,
-			"to": 8
+			"from": 0,
+			"to": 7
 		},
 		{
-			"from": 7,
-			"to": 8
+			"from": 0,
+			"to": 7
 		},
 		{
-			"from": 7,
-			"to": 11
+			"from": 0,
+			"to": 7
 		},
 		{
-			"from": 7,
-			"to": 11
+			"from": 0,
+			"to": 7
 		},
 		{
-			"from": 7,
-			"to": 9
+			"from": 0,
+			"to": 2
 		},
 		{
-			"from": 7,
-			"to": 9
+			"from": 0,
+			"to": 2
 		},
 		{
-			"from": 7,
-			"to": 10
+			"from": 0,
+			"to": 3
 		},
 		{
-			"from": 7,
-			"to": 10
+			"from": 0,
+			"to": 3
 		},
 		{
-			"from": 7,
-			"to": 14
+			"from": 0,
+			"to": 4
 		},
 		{
-			"from": 7,
-			"to": 14
+			"from": 0,
+			"to": 4
 		},
 		{
-			"from": 7,
-			"to": 15
-		},
-		{
-			"from": 7,
-			"to": 15
-		},
-		{
-			"from": 1,
+			"from": 0,
 			"to": 5
 		},
 		{
-			"from": 1,
+			"from": 0,
 			"to": 5
+		},
+		{
+			"from": 0,
+			"to": 6
+		},
+		{
+			"from": 0,
+			"to": 6
+		},
+		{
+			"from": 0,
+			"to": 6
+		},
+		{
+			"from": 0,
+			"to": 6
+		},
+		{
+			"from": 1,
+			"to": 2
+		},
+		{
+			"from": 1,
+			"to": 2
 		},
 		{
 			"from": 1,
@@ -236,123 +192,43 @@
 		},
 		{
 			"from": 1,
-			"to": 2
-		},
-		{
-			"from": 1,
-			"to": 2
-		},
-		{
-			"from": 1,
-			"to": 14
-		},
-		{
-			"from": 1,
-			"to": 14
-		},
-		{
-			"from": 1,
-			"to": 15
-		},
-		{
-			"from": 1,
-			"to": 15
-		},
-		{
-			"from": 0,
-			"to": 2
-		},
-		{
-			"from": 0,
-			"to": 2
-		},
-		{
-			"from": 0,
-			"to": 13
-		},
-		{
-			"from": 0,
-			"to": 13
-		},
-		{
-			"from": 0,
-			"to": 12
-		},
-		{
-			"from": 0,
-			"to": 12
-		},
-		{
-			"from": 0,
 			"to": 5
 		},
 		{
-			"from": 0,
+			"from": 1,
 			"to": 5
 		},
 		{
-			"from": 0,
-			"to": 3
-		},
-		{
-			"from": 0,
-			"to": 3
-		},
-		{
-			"from": 0,
-			"to": 4
-		},
-		{
-			"from": 0,
-			"to": 4
-		},
-		{
-			"from": 6,
-			"to": 8
-		},
-		{
-			"from": 6,
-			"to": 8
-		},
-		{
-			"from": 6,
-			"to": 11
-		},
-		{
-			"from": 6,
-			"to": 11
-		},
-		{
-			"from": 6,
+			"from": 1,
 			"to": 9
 		},
 		{
-			"from": 6,
+			"from": 1,
 			"to": 9
 		},
 		{
-			"from": 6,
-			"to": 10
+			"from": 1,
+			"to": 9
 		},
 		{
-			"from": 6,
-			"to": 10
+			"from": 1,
+			"to": 9
 		},
 		{
-			"from": 6,
-			"to": 13
+			"from": 1,
+			"to": 8
 		},
 		{
-			"from": 6,
-			"to": 13
+			"from": 1,
+			"to": 8
 		},
 		{
-			"from": 6,
-			"to": 12
+			"from": 1,
+			"to": 8
 		},
 		{
-			"from": 6,
-			"to": 12
+			"from": 1,
+			"to": 8
 		}
 	]
 }

@@ -1,0 +1,30 @@
+apiVersion: topo.yndd.io/v1alpha1
+kind: Template
+metadata:
+  name: ss-tmpl1
+  namespace: default
+spec:
+  properties:
+    fabric:
+      settings:
+        maxUplinksTier2ToTier1: 4
+        maxUplinksTier3ToTier2: 4
+      tier1:
+        num: 2
+        vendorInfo:
+        - vendorType: nokiaSRL
+          platform: "IXR-D3"
+      pod:
+      - num: 1
+        tier3:
+          num: 4
+          uplinkPerNode: 2
+          vendorInfo:
+          - vendorType: nokiaSRL
+            platform: "IXR-D3"
+        tier2:
+          num: 2
+          uplinkPerNode: 4
+          vendorInfo:
+          - vendorType: nokiaSRL
+            platform: "IXR-D3"

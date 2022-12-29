@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strconv"
 
-	targetv1 "github.com/yndd/target/apis/target/v1"
-	topov1alpha1 "github.com/yndd/topology/apis/topo/v1alpha1"
+	targetv1 "github.com/henderiw-k8s-lcnc/target/apis/target/v1"
+	topov1alpha1 "github.com/henderiw-k8s-lcnc/topology/apis/topo/v1alpha1"
 	"gonum.org/v1/gonum/graph/encoding"
 	"k8s.io/apimachinery/pkg/labels"
 )
