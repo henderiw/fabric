@@ -30,7 +30,7 @@ func (r *fabric) buildNewFabricTemplate() (*topov1alpha1.FabricTemplate, error) 
 }
 
 func (r *fabric) getPodFromTemplate(podTemplateRef *topov1alpha1.TemplateReference) (*topov1alpha1.PodTemplate, error) {
-	namespace := "defuult"
+	namespace := "default"
 	if podTemplateRef.Namespace != "" {
 		namespace = podTemplateRef.Namespace
 	}
