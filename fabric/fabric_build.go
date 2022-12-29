@@ -30,8 +30,12 @@ func (r *fabric) buildNewFabricTemplate() (*topov1alpha1.FabricTemplate, error) 
 }
 
 func (r *fabric) getPodFromTemplate(podTemplateRef *topov1alpha1.TemplateReference) (*topov1alpha1.PodTemplate, error) {
+	namespace := "defuult"
+	if podTemplateRef.Namespace != "" {
+		namespace = podTemplateRef.Namespace
+	}
 	for _, t := range r.cfg.ChildTemplates {
-		if t.GetName() == podTemplateRef.Name && t.GetNamespace() == podTemplateRef.Namespace {
+		if t.GetName() == podTemplateRef.Name && t.GetNamespace() == namespace {
 			// we validates the child templates to ensure they have only 1 podTemplate
 			// so we are ok to use index 0
 			return t.Spec.Properties.Fabric.Pod[0], nil
