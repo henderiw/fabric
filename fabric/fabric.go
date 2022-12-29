@@ -14,18 +14,19 @@ import (
 )
 
 type Fabric interface {
-	GetNodes() []Node
-	GetLinks() []Link
+	GetNodes() []*topov1alpha1.Node
+	GetLinks() []*topov1alpha1.Link
 	PrintGraph()
 	GenerateJsonFile() error
+	Print()
 }
 
 type Config struct {
 	Name            string
 	Namespace       string
+	Location        *topov1alpha1.Location
 	MasterTemplates []*topov1alpha1.Template
 	ChildTemplates  []*topov1alpha1.Template
-	Location        *topov1alpha1.Location
 }
 
 type fabric struct {
@@ -67,7 +68,21 @@ func New(c *Config) (Fabric, error) {
 	return r, nil
 }
 
-func (f *fabric) GetNodes() []Node {
+func (f *fabric) GetNodes() []*topov1alpha1.Node {
+	nodes := make([]*topov1alpha1.Node, 0)
+	it := f.graph.Nodes()
+	if it == nil {
+		return nodes
+	}
+
+	for it.Next() {
+		n := it.Node().(Node)
+		nodes = append(nodes, n.GetKRMNode())
+	}
+	return nodes
+}
+
+func (f *fabric) getNodes() []Node {
 	nodes := make([]Node, 0)
 	it := f.graph.Nodes()
 	if it == nil {
@@ -81,7 +96,24 @@ func (f *fabric) GetNodes() []Node {
 	return nodes
 }
 
-func (f *fabric) GetLinks() []Link {
+func (f *fabric) GetLinks() []*topov1alpha1.Link {
+	links := make([]*topov1alpha1.Link, 0)
+	it := f.graph.Edges()
+	if it == nil {
+		return links
+	}
+
+	for it.Next() {
+		edge := it.Edge().(multi.Edge)
+		for edge.Lines.Next() {
+			l := edge.Lines.Line().(Link)
+			links = append(links, l.GetKRMLink())
+		}
+	}
+	return links
+}
+
+func (f *fabric) getLinks() []Link {
 	links := make([]Link, 0)
 	it := f.graph.Edges()
 	if it == nil {
@@ -126,9 +158,9 @@ func (f *fabric) nodesByLabel(selector labels.Selector) (nodes []Node) {
 	return nodes
 }
 
-func (f *fabric) addLink(from, to Node) Link {
-	l := f.graph.NewLine(from, to)
-	return NewLink(l)
+func (f *fabric) addLink(oi *originInfo, li *linkInfo) Link {
+	l := f.graph.NewLine(li.from, li.to)
+	return NewLink(oi, li, l.ID())
 }
 
 func (f *fabric) PrintGraph() {
@@ -167,32 +199,32 @@ func (f *fabric) GenerateJsonFile() error {
 		Edges: []*TopologyJsonLink{},
 	}
 
-	nodes := f.GetNodes()
+	nodes := f.getNodes()
 	for _, n := range nodes {
 
 		vendorType := ""
-		switch n.GetVendorType() {
+		switch n.GetKRMNode().Spec.Properties.VendorType {
 		case targetv1.VendorTypeNokiaSRL:
 			vendorType = "srlinux"
 		case targetv1.VendorTypeNokiaSROS:
 			vendorType = "sros"
 		default:
-			vendorType = string(n.GetVendorType())
+			vendorType = string(n.GetKRMNode().Spec.Properties.VendorType)
 		}
 
 		t.Nodes = append(t.Nodes, &TopologyJsonNode{
 			ID:    int(n.ID()),
-			Level: topov1alpha1.GetLevel(topov1alpha1.Position(n.GetPosition())),
+			Level: topov1alpha1.GetLevel(topov1alpha1.Position(n.GetKRMNode().Spec.Properties.Position)),
 			Label: n.String(),
 			Nos:   vendorType,
-			Cid:   n.GetPosition(),
+			Cid:   string(n.GetKRMNode().Spec.Properties.Position),
 			Data: &TopologyJsonNodedata{
-				Model: n.GetPlatform(),
+				Model: n.GetKRMNode().Spec.Properties.Platform,
 			},
 		})
 	}
 
-	links := f.GetLinks()
+	links := f.getLinks()
 	for _, l := range links {
 		t.Edges = append(t.Edges, &TopologyJsonLink{
 			From: int(l.From().(Node).ID()),
@@ -220,4 +252,23 @@ func (f *fabric) GenerateJsonFile() error {
 
 	defer file.Close()
 	return nil
+}
+
+func (r *fabric) Print() {
+	for _, n := range r.GetNodes() {
+		b, err := json.MarshalIndent(n, "", "  ")
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		fmt.Println(string(b))
+	}
+	for _, l := range r.GetLinks() {
+		b, err := json.MarshalIndent(l, "", "  ")
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		fmt.Println(string(b))
+	}
 }

@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/henderiw-k8s-lcnc/target v0.0.1
-	github.com/henderiw-k8s-lcnc/topology v0.0.1
+	github.com/henderiw-k8s-lcnc/topology v0.0.3
 	gonum.org/v1/gonum v0.11.0
 	k8s.io/apimachinery v0.26.0
 	sigs.k8s.io/yaml v1.3.0

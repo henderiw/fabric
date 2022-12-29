@@ -40,11 +40,11 @@ func (r *fabric) connectSpine2Leaf(t *topov1alpha1.FabricTemplate) error {
 			tier2Selector := labels.NewSelector()
 			tier3Selector := labels.NewSelector()
 
-			tier2Req, _ := labels.NewRequirement(KeyPosition, selection.Equals, []string{string(topov1alpha1.PositionSpine)})
-			tier3Req, _ := labels.NewRequirement(KeyPosition, selection.Equals, []string{string(topov1alpha1.PositionLeaf)})
+			tier2Req, _ := labels.NewRequirement(topov1alpha1.LabelKeyTopologyPosition, selection.Equals, []string{string(topov1alpha1.PositionSpine)})
+			tier3Req, _ := labels.NewRequirement(topov1alpha1.LabelKeyTopologyPosition, selection.Equals, []string{string(topov1alpha1.PositionLeaf)})
 
 			// select the POD Index
-			podIdxReq, _ := labels.NewRequirement(KeyPodIndex, selection.Equals, []string{strconv.Itoa(podIndex)})
+			podIdxReq, _ := labels.NewRequirement(topov1alpha1.LabelKeyTopologyPodIndex, selection.Equals, []string{strconv.Itoa(podIndex)})
 
 			tier2Selector = tier2Selector.Add(*tier2Req, *podIdxReq)
 			tier3Selector = tier3Selector.Add(*tier3Req, *podIdxReq)
@@ -76,22 +76,33 @@ func (r *fabric) connectSpine2Leaf(t *topov1alpha1.FabricTemplate) error {
 					// max uplinks    = mergedTemplate.MaxUplinksTier3ToTier2
 					for u := uint32(0); u < uplinksPerNode; u++ {
 
-						l := r.addLink(tier2Node, tier3Node)
-
-						tier3NodeIndex, err := strconv.Atoi(tier3Node.GetRelativeNodeIndex())
+						tier2NodeIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
 						if err != nil {
 							return err
 						}
-						tier2NodeIndex, err := strconv.Atoi(tier2Node.GetRelativeNodeIndex())
+						tier3NodeIndex, err := strconv.Atoi(tier3Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
 						if err != nil {
 							return err
 						}
 
-						label := map[string]string{
-							tier2Node.String(): tier2Node.GetInterfaceName(u + 1 + ((uint32(tier3NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
-							tier3Node.String(): tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
-						}
-						l.SetLabel(label)
+						/*
+							label := map[string]string{
+								tier2Node.String(): tier2Node.GetInterfaceName(u + 1 + ((uint32(tier3NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
+								tier3Node.String(): tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
+							}
+							l.SetLabel(label)
+						*/
+
+						l := r.addLink(&originInfo{
+							name:      r.cfg.Name,
+							namespace: r.cfg.Namespace,
+							location:  r.cfg.Location,
+						}, &linkInfo{
+							from:      tier2Node,
+							to:        tier3Node,
+							fromItfce: tier2Node.GetInterfaceName(u + 1 + ((uint32(tier3NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
+							toItfce:   tier3Node.GetInterfaceNameWithPlatfromOffset(u + 1 + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxUplinksTier3ToTier2)),
+						})
 
 						r.graph.SetLine(l)
 
@@ -106,12 +117,12 @@ func (r *fabric) connectSpine2Leaf(t *topov1alpha1.FabricTemplate) error {
 
 func (r *fabric) connectSpine2SuperSpine(t *topov1alpha1.FabricTemplate) error {
 	tier1Selector := labels.NewSelector()
-	tier1Req, _ := labels.NewRequirement(KeyPosition, selection.Equals, []string{string(topov1alpha1.PositionSuperspine)})
+	tier1Req, _ := labels.NewRequirement(topov1alpha1.LabelKeyTopologyPosition, selection.Equals, []string{string(topov1alpha1.PositionSuperspine)})
 	tier1Selector = tier1Selector.Add(*tier1Req)
 	tier1Nodes := r.nodesByLabel(tier1Selector)
 
 	tier2Selector := labels.NewSelector()
-	tier2Req, _ := labels.NewRequirement(KeyPosition, selection.Equals, []string{string(topov1alpha1.PositionSpine)})
+	tier2Req, _ := labels.NewRequirement(topov1alpha1.LabelKeyTopologyPosition, selection.Equals, []string{string(topov1alpha1.PositionSpine)})
 	tier2Selector = tier2Selector.Add(*tier2Req)
 	tier2Nodes := r.nodesByLabel(tier2Selector)
 
@@ -128,7 +139,7 @@ func (r *fabric) connectSpine2SuperSpine(t *topov1alpha1.FabricTemplate) error {
 
 			// spine and superspine line up so we only create a link if there is a match
 			// on the indexes
-			if tier2Node.GetRelativeNodeIndex() == tier1Node.GetPlaneIndex() {
+			if tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex] == tier1Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyPlaneIndex] {
 				// the algorithm needs to avoid reindixing if changes happen -> introduced maxNumUplinks
 				// the allocation is first allocating the uplink Index
 				// u represnts the actual uplink index
@@ -140,22 +151,41 @@ func (r *fabric) connectSpine2SuperSpine(t *topov1alpha1.FabricTemplate) error {
 				// max uplinks             = mergedTemplate.MaxUplinksTier2ToTier1
 				for u := uint32(0); u < uplinksPerNode; u++ {
 
-					l := r.addLink(tier1Node, tier2Node)
+					/*
+						l := r.addLink(&originInfo{
+							name:      r.cfg.Name,
+							namespace: r.cfg.Namespace,
+							location:  r.cfg.Location,
+						}, tier1Node, tier2Node)
+					*/
 
-					podIndex, err := strconv.Atoi(tier2Node.GetPodIndex())
+					podIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyPodIndex])
 					if err != nil {
 						return err
 					}
-					relativeIndex, err := strconv.Atoi(tier1Node.GetRelativeNodeIndex())
+					relativeIndex, err := strconv.Atoi(tier1Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
 					if err != nil {
 						return err
 					}
 
-					label := map[string]string{
-						tier1Node.String(): tier1Node.GetInterfaceName(u + 1 + (uint32(podIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
-						tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(relativeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
-					}
-					l.SetLabel(label)
+					/*
+						label := map[string]string{
+							tier1Node.String(): tier1Node.GetInterfaceName(u + 1 + (uint32(podIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+							tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(relativeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+						}
+						l.SetLabel(label)
+					*/
+
+					l := r.addLink(&originInfo{
+						name:      r.cfg.Name,
+						namespace: r.cfg.Namespace,
+						location:  r.cfg.Location,
+					}, &linkInfo{
+						from:      tier1Node,
+						to:        tier2Node,
+						fromItfce: tier1Node.GetInterfaceName(u + 1 + (uint32(podIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+						toItfce:   tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(relativeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+					})
 
 					r.graph.SetLine(l)
 
@@ -169,12 +199,12 @@ func (r *fabric) connectSpine2SuperSpine(t *topov1alpha1.FabricTemplate) error {
 
 func (r *fabric) connectSpine2borderLeaf(t *topov1alpha1.FabricTemplate) error {
 	tier2Selector := labels.NewSelector()
-	tier2Req, _ := labels.NewRequirement(KeyPosition, selection.Equals, []string{string(topov1alpha1.PositionSpine)})
+	tier2Req, _ := labels.NewRequirement(topov1alpha1.LabelKeyTopologyPosition, selection.Equals, []string{string(topov1alpha1.PositionSpine)})
 	tier2Selector = tier2Selector.Add(*tier2Req)
 	tier2Nodes := r.nodesByLabel(tier2Selector)
 
 	blSelector := labels.NewSelector()
-	blReq, _ := labels.NewRequirement(KeyPosition, selection.Equals, []string{string(topov1alpha1.PositionBorderLeaf)})
+	blReq, _ := labels.NewRequirement(topov1alpha1.LabelKeyTopologyPosition, selection.Equals, []string{string(topov1alpha1.PositionBorderLeaf)})
 	blSelector = blSelector.Add(*blReq)
 	blNodes := r.nodesByLabel(blSelector)
 
@@ -191,29 +221,48 @@ func (r *fabric) connectSpine2borderLeaf(t *topov1alpha1.FabricTemplate) error {
 
 			for u := uint32(0); u < uplinksPerNode; u++ {
 
-				l := r.addLink(blNode, tier2Node)
+				/*
+					l := r.addLink(&originInfo{
+						name:      r.cfg.Name,
+						namespace: r.cfg.Namespace,
+						location:  r.cfg.Location,
+					}, blNode, tier2Node)
+				*/
 
-				podIndex, err := strconv.Atoi(tier2Node.GetPodIndex())
+				podIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyPodIndex])
 				if err != nil {
 					return err
 				}
 				if uint32(podIndex) > t.Settings.MaxUplinksTier2ToTier1 {
 					return fmt.Errorf("spines per pod cannot be bigger than maxSpinesPerPod")
 				}
-				tier2NodeIndex, err := strconv.Atoi(tier2Node.GetRelativeNodeIndex())
+				tier2NodeIndex, err := strconv.Atoi(tier2Node.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
 				if err != nil {
 					return err
 				}
-				blNodeIndex, err := strconv.Atoi(blNode.GetRelativeNodeIndex())
+				blNodeIndex, err := strconv.Atoi(blNode.GetKRMNode().GetLabels()[topov1alpha1.LabelKeyTopologyRelativeNodeIndex])
 				if err != nil {
 					return err
 				}
 
-				label := map[string]string{
-					blNode.String():    blNode.GetInterfaceName(u + 1 + ((uint32(podIndex-1) + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxSpinesPerPod)) * t.Settings.MaxUplinksTier2ToTier1)),
-					tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(blNodeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
-				}
-				l.SetLabel(label)
+				/*
+					label := map[string]string{
+						blNode.String():    blNode.GetInterfaceName(u + 1 + ((uint32(podIndex-1) + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxSpinesPerPod)) * t.Settings.MaxUplinksTier2ToTier1)),
+						tier2Node.String(): tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(blNodeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+					}
+					l.SetLabel(label)
+				*/
+
+				l := r.addLink(&originInfo{
+					name:      r.cfg.Name,
+					namespace: r.cfg.Namespace,
+					location:  r.cfg.Location,
+				}, &linkInfo{
+					from:      blNode,
+					to:        tier2Node,
+					fromItfce: blNode.GetInterfaceName(u + 1 + ((uint32(podIndex-1) + ((uint32(tier2NodeIndex) - 1) * t.Settings.MaxSpinesPerPod)) * t.Settings.MaxUplinksTier2ToTier1)),
+					toItfce:   tier2Node.GetInterfaceNameWithPlatfromOffset(u + 1 + (uint32(blNodeIndex-1) * t.Settings.MaxUplinksTier2ToTier1)),
+				})
 
 				r.graph.SetLine(l)
 

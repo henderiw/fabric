@@ -25,6 +25,8 @@ func main() {
 	}
 
 	f, err := fabric.New(&fabric.Config{
+		Name: "fabric1",
+		Namespace: "default",
 		ChildTemplates: []*topov1alpha1.Template{
 			t,
 		},
@@ -46,4 +48,6 @@ func main() {
 	if err := f.GenerateJsonFile(); err != nil {
 		panic(err)
 	}
+
+	f.Print()
 }

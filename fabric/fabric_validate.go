@@ -20,9 +20,14 @@ func (r *fabric) validateTemplates() error {
 		}
 	}
 	for _, t := range r.cfg.ChildTemplates {
-		if err := t.Spec.Properties.Fabric.CheckTemplate(false); err != nil {
+		master := false
+		if len(r.cfg.MasterTemplates) == 0 {
+			master = true
+		} 
+		if err := t.Spec.Properties.Fabric.CheckTemplate(master); err != nil {
 			return fmt.Errorf("validation pf parent template %s failed, error: %s", t.GetNamespace()+"/"+t.GetName(), err.Error())
 		}
+
 	}
 	return nil
 }

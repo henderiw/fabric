@@ -59,7 +59,7 @@ func (r *fabric) processTier(position topov1alpha1.Position, index uint32, tierT
 			uplinkPerNode:     tierTempl.UplinksPerNode,
 			vendorInfo:        tierTempl.VendorInfo[vendorIdx],
 			//toBeDeployed:      toBeDeployed,
-			location:          r.cfg.Location,
+			//location:          r.cfg.Location,
 		}
 
 		switch position {
@@ -73,13 +73,11 @@ func (r *fabric) processTier(position topov1alpha1.Position, index uint32, tierT
 			ni.podIndex = index
 		}
 
-		n, err := NewNode(ni)
-		if err != nil {
-			return err
-		}
-		r.addNode(n)
+		r.addNode(NewNode(&originInfo{
+			name:      r.cfg.Name,
+			namespace: r.cfg.Namespace,
+			location:  r.cfg.Location,
+		}, ni))
 	}
 	return nil
 }
-
-
